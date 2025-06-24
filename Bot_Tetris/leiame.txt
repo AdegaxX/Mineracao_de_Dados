@@ -1,0 +1,21 @@
+Parece que seu treinamento da rede neural convolucional (CNN) está ocorrendo bem! Aqui estão alguns detalhes importantes do que foi exibido:
+
+Avisos do TensorFlow:
+
+O TensorFlow está utilizando operações personalizadas do oneDNN (um framework otimizado para operações matemáticas), o que pode causar pequenas variações nos resultados numéricos devido ao arredondamento. Isso é esperado e geralmente não é um problema para a maioria dos casos.
+
+Também foi alertado sobre a utilização de funções específicas de camada no seu modelo, como o input_shape, que você pode querer ajustar no seu modelo Sequential.
+
+Formatação das Imagens:
+
+As imagens foram carregadas com diferentes dimensões, mas um padding foi aplicado para que todas as imagens tenham o mesmo tamanho final de (128, 128, 3). Isso garante que o modelo receba entradas com o mesmo formato.
+
+Progressão do Treinamento:
+
+A cada época, a precisão (accuracy) está subindo de forma significativa, começando de 23% e subindo para 97% até a época 8/10. Isso é uma boa indicação de que a rede está aprendendo bem, com a perda (loss) caindo constantemente.
+
+Próximos Passos:
+
+O treinamento parece estar em boa forma, e dependendo do seu objetivo (acurácia, tempo de treinamento, etc.), você pode optar por ajustar os hiperparâmetros (como a taxa de aprendizado) ou o número de épocas.
+
+Se você estiver observando overfitting (acurácia muito alta na parte de treinamento e baixa na validação), pode ser necessário ajustar a regularização ou outras técnicas de controle de overfitting.
