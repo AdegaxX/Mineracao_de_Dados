@@ -1,94 +1,77 @@
+# tetris_ai.py
+
 import numpy as np
 
-BOARD_HEIGHT = 20
-BOARD_WIDTH = 10
-
-PIECES = {
-    'I': [np.array([[1, 1, 1, 1]]), np.array([[1], [1], [1], [1]])],
-    'O': [np.array([[1, 1], [1, 1]])],
-    'T': [np.array([[0, 1, 0], [1, 1, 1]]),
-          np.array([[1, 0], [1, 1], [1, 0]]),
-          np.array([[1, 1, 1], [0, 1, 0]]),
-          np.array([[0, 1], [1, 1], [0, 1]])],
-    'S': [np.array([[0, 1, 1], [1, 1, 0]]),
-          np.array([[1, 0], [1, 1], [0, 1]])],
-    'Z': [np.array([[1, 1, 0], [0, 1, 1]]),
-          np.array([[0, 1], [1, 1], [1, 0]])],
-    'L': [np.array([[1, 0], [1, 0], [1, 1]]),
-          np.array([[1, 1, 1], [1, 0, 0]]),
-          np.array([[1, 1], [0, 1], [0, 1]]),
-          np.array([[0, 0, 1], [1, 1, 1]])],
-    'J': [np.array([[0, 1], [0, 1], [1, 1]]),
-          np.array([[1, 0, 0], [1, 1, 1]]),
-          np.array([[1, 1], [1, 0], [1, 0]]),
-          np.array([[1, 1, 1], [0, 0, 1]])]
-}
-
+# Heurística baseada em Dellacherie, ajustável
 WEIGHTS = {
-    "lines": 0.8,
-    "holes": -0.7,
-    "height": -0.5
+    'aggregate_height': -0.510066,
+    'complete_lines': 0.760666,
+    'holes': -0.35663,
+    'bumpiness': -0.184483
 }
 
-def get_holes(board):
+def get_column_heights(board):
+    heights = np.zeros(board.shape[1], dtype=int)
+    for j in range(board.shape[1]):
+        column = board[:, j]
+        filled = np.where(column == 1)[0]
+        heights[j] = board.shape[0] - filled[0] if filled.size > 0 else 0
+    return heights
+
+def count_holes(board):
     holes = 0
-    for col in range(board.shape[1]):
-        col_data = board[:, col]
-        seen_block = False
-        for cell in col_data:
-            if cell:
-                seen_block = True
-            elif seen_block:
-                holes += 1
+    for j in range(board.shape[1]):
+        column = board[:, j]
+        filled = np.where(column == 1)[0]
+        if filled.size > 0:
+            holes += np.sum(column[filled[0]:] == 0)
     return holes
 
-def get_height(board):
-    height = 0
-    for col in range(board.shape[1]):
-        cells = board[:, col]
-        top = np.argmax(cells) if np.any(cells) else 0
-        height += (BOARD_HEIGHT - top) if np.any(cells) else 0
-    return height
+def get_bumpiness(heights):
+    return np.sum(np.abs(np.diff(heights)))
 
-def count_complete_lines(board):
+def get_complete_lines(board):
     return np.sum(np.all(board == 1, axis=1))
 
-def simulate(board, piece, rotation, col):
-    piece_matrix = PIECES[piece][rotation]
-    h, w = piece_matrix.shape
-    sim_board = board.copy()
-    for row in range(BOARD_HEIGHT - h + 1):
-        if np.any(sim_board[row:row + h, col:col + w] & piece_matrix):
+def evaluate_board(board):
+    heights = get_column_heights(board)
+    agg_height = np.sum(heights)
+    holes = count_holes(board)
+    bumpiness = get_bumpiness(heights)
+    complete_lines = get_complete_lines(board)
+
+    score = (WEIGHTS['aggregate_height'] * agg_height +
+             WEIGHTS['complete_lines'] * complete_lines +
+             WEIGHTS['holes'] * holes +
+             WEIGHTS['bumpiness'] * bumpiness)
+
+    return score
+
+def simulate_piece_drop(board, piece_type, rotation, column):
+    # ⚠️ Simplificação: assume peça 1x1 para teste
+    # Para peça real, implemente lógica de rotação e colisão conforme shape
+    simulated = board.copy()
+    for i in range(board.shape[0] - 1, -1, -1):
+        if simulated[i, column] == 0:
+            simulated[i, column] = 1
             break
-    else:
-        row = BOARD_HEIGHT - h
+    return simulated
 
-    row -= 1
-    while row >= 0 and not np.any(sim_board[row:row + h, col:col + w] & piece_matrix):
-        row -= 1
-    row += 1
-    if row + h > BOARD_HEIGHT:
-        return board  # invalid
-    sim_board[row:row + h, col:col + w] |= piece_matrix
-    return sim_board
+def get_best_move(board, piece_type):
+    best_score = -float('inf')
+    best_rotation = 0
+    best_col = 0
 
-def get_best_move(board, piece):
-    best_score = -np.inf
-    best_move = (0, 0)
+    possible_rotations = 4  # simplificação; defina por tipo real da peça
 
-    for r, rot in enumerate(PIECES[piece]):
-        h, w = rot.shape
-        for col in range(BOARD_WIDTH - w + 1):
-            sim_board = simulate(board, piece, r, col)
-            if sim_board is board:
-                continue
+    for rotation in range(possible_rotations):
+        for col in range(board.shape[1]):
+            simulated = simulate_piece_drop(board, piece_type, rotation, col)
+            score = evaluate_board(simulated)
 
-            score = (
-                WEIGHTS["lines"] * count_complete_lines(sim_board) +
-                WEIGHTS["holes"] * get_holes(sim_board) +
-                WEIGHTS["height"] * get_height(sim_board)
-            )
             if score > best_score:
                 best_score = score
-                best_move = (r, col)
-    return best_move
+                best_rotation = rotation
+                best_col = col
+
+    return best_rotation, best_col

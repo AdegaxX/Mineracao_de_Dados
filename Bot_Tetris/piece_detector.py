@@ -5,7 +5,7 @@ from config import PIECE_REGION
 from mss import mss
 
 CLASSES = ["I", "O", "T", "S", "Z", "L", "J"]
-MODEL_PATH = "piece_classifier.keras"  # se você salvou assim
+MODEL_PATH = r"C:\Adegax\Ciência de dados - ADEGAS\5º semestre\Mineração de dados\GitHub\Mineracao_de_Dados\Bot_Tetris\piece_classifier.keras"  # se você salvou assim
 
 model = tf.keras.models.load_model(MODEL_PATH)
 

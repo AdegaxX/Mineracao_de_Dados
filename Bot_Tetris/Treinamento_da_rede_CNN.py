@@ -133,7 +133,7 @@ else:
     model.fit(X, y, epochs=10, batch_size=32)
 
     # Salvando o modelo treinado
-    model.save('modelo_tetromino.keras')
+    model.save('piece_classifer.keras')
 
     # Previsões no conjunto de testes
     y_pred = model.predict(X)
